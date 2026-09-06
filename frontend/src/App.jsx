@@ -1,9 +1,94 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 
-const API_URL = import.meta.env.PROD
-    ? "https://weather-q81x.onrender.com/api"
-    : "http://localhost:5000/api";
+const GEOCODING_URL =
+    "https://geocoding-api.open-meteo.com/v1/search";
+
+const WEATHER_URL =
+    "https://api.open-meteo.com/v1/forecast";
+
+function getWeatherDescription(code) {
+    const descriptions = {
+        0: "Clear sky",
+        1: "Mainly clear",
+        2: "Partly cloudy",
+        3: "Overcast",
+        45: "Foggy",
+        48: "Depositing rime fog",
+        51: "Light drizzle",
+        53: "Moderate drizzle",
+        55: "Dense drizzle",
+        61: "Light rain",
+        63: "Moderate rain",
+        65: "Heavy rain",
+        71: "Light snowfall",
+        73: "Moderate snowfall",
+        75: "Heavy snowfall",
+        80: "Light rain showers",
+        81: "Moderate rain showers",
+        82: "Heavy rain showers",
+        95: "Thunderstorm",
+        96: "Thunderstorm with hail",
+        99: "Heavy thunderstorm with hail"
+    };
+
+    return descriptions[code] || "Unknown weather";
+}
+
+function generateAdvisory(precipitation, uv) {
+    const messages = [];
+
+    if (precipitation > 70) {
+        messages.push({
+            type: "rain",
+            level: "high",
+            message:
+                "Heavy rain likely — carry an umbrella and stay cautious."
+        });
+    } else if (precipitation > 40) {
+        messages.push({
+            type: "rain",
+            level: "moderate",
+            message:
+                "You might want to carry an umbrella, rain is possible."
+        });
+    }
+
+    if (uv > 6) {
+        messages.push({
+            type: "uv",
+            level: "high",
+            message:
+                "It's sunny out — use sunscreen before heading out."
+        });
+    }
+
+    if (messages.length === 0) {
+        return {
+            level: "good",
+            title: "Weather looks clear",
+            message: "Weather looks clear along your route.",
+            alerts: []
+        };
+    }
+
+    const highestLevel = messages.some(
+        item => item.level === "high"
+    )
+        ? "high"
+        : "moderate";
+
+    return {
+        level: highestLevel,
+        title:
+            highestLevel === "high"
+                ? "Weather Advisory"
+                : "Weather Notice",
+        message: messages.map(item => item.message).join(" "),
+        alerts: messages
+    };
+}
+
 
 function App() {
     const [search, setSearch] = useState("");
@@ -35,89 +120,213 @@ function App() {
     }, [search]);
 
 
-    async function searchLocation(query = search) {
-        if (!query.trim()) {
-            setLocations([]);
-            return;
-        }
-
-        setSearching(true);
-        setError("");
-
-        try {
-            const response = await fetch(
-                `${API_URL}/search?place=${encodeURIComponent(query)}`
-            );
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    data.error || "Unable to search location"
-                );
-            }
-
-            setLocations(data.results || []);
-
-        } catch (err) {
-            console.error(err);
-            setLocations([]);
-            setError(
-                err.message || "Unable to search location"
-            );
-        } finally {
-            setSearching(false);
-        }
+async function searchLocation(query = search) {
+    if (!query.trim()) {
+        setLocations([]);
+        return;
     }
+
+    setSearching(true);
+    setError("");
+
+    try {
+        const response = await fetch(
+            `${GEOCODING_URL}?name=${encodeURIComponent(
+                query
+            )}&count=8&language=en&format=json`
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.reason || "Unable to search location"
+            );
+        }
+
+        setLocations(data.results || []);
+    } catch (err) {
+        console.error("Location search error:", err);
+
+        setLocations([]);
+
+        setError(
+            err.message || "Unable to search location"
+        );
+    } finally {
+        setSearching(false);
+    }
+}
+
 
 
     // --------------------------------------------------
     // SELECT LOCATION
     // --------------------------------------------------
 
-    async function selectLocation(location) {
+async function selectLocation(location) {
+    setLocations([]);
+    setSelectedLocation(location);
+    setSearch(location.name);
 
-        // IMPORTANT:
-        // Close dropdown immediately
-        setLocations([]);
+    setLoading(true);
+    setError("");
 
-        // Set selected city
-        setSelectedLocation(location);
+    try {
+        const params = new URLSearchParams({
+            latitude: location.latitude,
+            longitude: location.longitude,
 
-        // Put selected city inside search box
-        setSearch(location.name);
+            current: [
+                "temperature_2m",
+                "precipitation_probability",
+                "uv_index",
+                "weather_code",
+                "wind_speed_10m"
+            ].join(","),
 
-        setLoading(true);
-        setError("");
+            hourly: [
+                "temperature_2m",
+                "precipitation_probability",
+                "uv_index",
+                "weather_code",
+                "wind_speed_10m"
+            ].join(","),
 
-        try {
+            daily: [
+                "temperature_2m_max",
+                "temperature_2m_min",
+                "weather_code",
+                "precipitation_probability_max"
+            ].join(","),
 
-            const response = await fetch(
-                `${API_URL}/weather?latitude=${location.latitude}&longitude=${location.longitude}`
+            forecast_hours: "12",
+            forecast_days: "3",
+            timezone: "auto"
+        });
+
+        const response = await fetch(
+            `${WEATHER_URL}?${params.toString()}`
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.reason || "Unable to fetch weather"
             );
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(
-                    data.error || "Unable to fetch weather"
-                );
-            }
-
-            setWeather(data);
-
-        } catch (err) {
-
-            console.error("Weather error:", err);
-
-            setError(
-                err.message || "Unable to fetch weather"
-            );
-
-        } finally {
-            setLoading(false);
         }
+
+        const current = {
+            temperature: data.current.temperature_2m,
+
+            precipitation_probability:
+                data.current.precipitation_probability,
+
+            uv_index:
+                data.current.uv_index,
+
+            weather_code:
+                data.current.weather_code,
+
+            wind_speed:
+                data.current.wind_speed_10m
+        };
+
+        const weather = {
+            ...current,
+
+            description: getWeatherDescription(
+                current.weather_code
+            ),
+
+            unit: {
+                temperature:
+                    data.current_units.temperature_2m,
+
+                wind:
+                    data.current_units.wind_speed_10m
+            }
+        };
+
+        const hourly = data.hourly.time.map(
+            (time, index) => ({
+                time,
+
+                temperature:
+                    data.hourly.temperature_2m[index],
+
+                precipitation_probability:
+                    data.hourly
+                        .precipitation_probability[index],
+
+                uv_index:
+                    data.hourly.uv_index[index],
+
+                weather_code:
+                    data.hourly.weather_code[index]
+            })
+        );
+
+        const daily = data.daily.time.map(
+            (date, index) => ({
+                date,
+
+                max:
+                    data.daily.temperature_2m_max[index],
+
+                min:
+                    data.daily.temperature_2m_min[index],
+
+                precipitation:
+                    data.daily
+                        .precipitation_probability_max[index],
+
+                weather_code:
+                    data.daily.weather_code[index],
+
+                description:
+                    getWeatherDescription(
+                        data.daily.weather_code[index]
+                    )
+            })
+        );
+
+        const advisory = generateAdvisory(
+            current.precipitation_probability,
+            current.uv_index
+        );
+
+        setWeather({
+            success: true,
+
+            location: {
+                latitude: location.latitude,
+                longitude: location.longitude,
+                timezone: data.timezone
+            },
+
+            weather,
+            advisory,
+            hourly,
+            daily
+        });
+
+    } catch (err) {
+        console.error(
+            "Weather error:",
+            err
+        );
+
+        setError(
+            err.message ||
+            "Unable to fetch weather"
+        );
+    } finally {
+        setLoading(false);
     }
+}
+
 
 
     // --------------------------------------------------
