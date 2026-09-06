@@ -1,16 +1,75 @@
-# React + Vite
+# 🌦️ WeatherWise
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A modern, responsive weather application that provides real-time weather information, forecasts, location-based weather data, and intelligent weather insights through a clean and user-friendly interface.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Features
 
-## React Compiler
+- 🌍 Search weather by city/location
+- 🔎 Smart location search with suggestions
+- 📍 Location-based weather information
+- 🌡️ Current temperature and weather conditions
+- 💧 Humidity information
+- 💨 Wind speed and direction
+- 🌧️ Weather forecast
+- 🌅 Sunrise and sunset information
+- 🧠 Weather advisory and intelligent recommendations
+- ⚡ Fast and responsive interface
+- 📱 Responsive design for desktop and mobile
+- 🎨 Modern and intuitive UI
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the Oxlint configuration
+## 🛠️ Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+### Frontend
+- React.js
+- Vite
+- JavaScript
+- HTML5
+- CSS3
+
+### Backend
+- Node.js
+- Express.js
+- REST APIs
+
+### Other Technologies
+- Geocoding services
+- Weather APIs
+- Git & GitHub
+
+---
+
+## 📁 Project Structure
+
+```text
+weather-app/
+│
+├── backend/
+│   ├── cache/
+│   ├── routes/
+│   │   ├── search.js
+│   │   └── weather.js
+│   ├── services/
+│   │   ├── advisoryEngine.js
+│   │   ├── geocodeService.js
+│   │   └── weatherService.js
+│   ├── package.json
+│   └── server.js
+│
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── assets/
+│   │   ├── App.css
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   └── main.jsx
+│   ├── index.html
+│   ├── package.json
+│   └── vite.config.js
+│
+├── .gitignore
+└── README.md
