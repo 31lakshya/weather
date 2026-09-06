@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 const API_URL = import.meta.env.PROD
-    ? "/api"
+    ? "https://weather-q81x.onrender.com/api"
     : "http://localhost:5000/api";
 
 function App() {
