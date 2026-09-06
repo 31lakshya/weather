@@ -171,7 +171,7 @@ router.get("/", async (req, res) => {
 
         res.status(500).json({
             success: false,
-            error: "Unable to fetch weather"
+            error: error.message
         });
     }
 });
