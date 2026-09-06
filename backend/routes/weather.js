@@ -166,7 +166,7 @@ router.get("/", async (req, res) => {
 
         console.error(
             "Weather error:",
-            error.message
+            error
         );
 
         res.status(500).json({
