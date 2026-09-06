@@ -26,8 +26,13 @@ app.use((req, res) => {
     });
 });
 
-const PORT = 5000;
+module.exports = app;
 
-app.listen(PORT, () => {
-    console.log(`🌤️ Weather server running at http://localhost:${PORT}`);
-});
+// Local development only
+if (require.main === module) {
+    const PORT = process.env.PORT || 5000;
+
+    app.listen(PORT, () => {
+        console.log(`🌤️ Weather server running at http://localhost:${PORT}`);
+    });
+}

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = import.meta.env.PROD
+    ? "/api"
+    : "http://localhost:5000/api";
 
 function App() {
     const [search, setSearch] = useState("");
