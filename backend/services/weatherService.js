@@ -24,8 +24,8 @@ async function getWeather(latitude, longitude) {
 
     const response = await axios.get(WEATHER_URL, {
         params: {
-            latitude,
-            longitude,
+            latitude: roundedLat,
+            longitude: roundedLon,
             hourly: [
                 "temperature_2m",
                 "precipitation_probability",
